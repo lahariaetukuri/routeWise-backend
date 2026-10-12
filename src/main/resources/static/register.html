@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RouteWise Registration</title>
+</head>
+<body>
+
+<h2>RouteWise Registration</h2>
+
+<form id="registerForm">
+
+  <label>Name:</label>
+  <input type="text" id="name" required>
+
+  <br><br>
+
+  <label>Email:</label>
+  <input type="email" id="email" required>
+
+  <br><br>
+
+  <label>Password:</label>
+  <input type="password" id="password" required>
+
+  <br><br>
+
+  <label>Phone:</label>
+  <input type="text" id="phone" required>
+
+  <br><br>
+
+  <button type="submit">Register</button>
+
+</form>
+
+<p id="message"></p>
+
+<a href="/login.html">Already have an account? Login</a>
+
+<script>
+
+  document.getElementById("registerForm").addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const user = {
+      name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
+      password: document.getElementById("password").value,
+      phone: document.getElementById("phone").value
+    };
+
+    try {
+
+      const response = await fetch("/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(user)
+      });
+
+      if (response.ok) {
+        document.getElementById("message").innerText =
+                "Registration successful! You can now login.";
+
+        document.getElementById("registerForm").reset();
+      } else {
+        document.getElementById("message").innerText =
+                "Registration failed. Please try again.";
+      }
+
+    } catch (error) {
+
+      document.getElementById("message").innerText =
+              "Something went wrong.";
+
+      console.error(error);
+    }
+
+  });
+
+</script>
+
+</body>
+</html>

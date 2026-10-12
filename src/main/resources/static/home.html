@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>RouteWise | Smart Route Recommendation</title>
+
+  <style>
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 18px 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .tagline {
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-top: 4px;
+    }
+
+    .logout {
+      color: white;
+      text-decoration: none;
+      padding: 9px 18px;
+      border: 1px solid #64748b;
+      border-radius: 7px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .welcome {
+      margin-bottom: 30px;
+    }
+
+    .welcome h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .welcome p {
+      color: #64748b;
+    }
+
+    .search-card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .search-card h2 {
+      margin-bottom: 25px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    .find-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .find-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .find-btn:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin-top: 20px;
+      padding: 15px;
+      background: #eff6ff;
+      border-radius: 8px;
+      color: #1e40af;
+      display: none;
+    }
+
+    .journey {
+      margin-top: 8px;
+      color: #475569;
+      font-size: 16px;
+    }
+
+    .route-card {
+      margin-top: 15px;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      color: #1f2937;
+    }
+
+    .route-card h3 {
+      margin-bottom: 12px;
+      color: #111827;
+    }
+
+    .route-card p {
+      margin-top: 8px;
+      color: #475569;
+    }
+
+    .recommended {
+      border: 2px solid #2563eb;
+      box-shadow: 0 5px 18px rgba(37, 99, 235, 0.15);
+    }
+
+    .recommended-badge {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 6px 12px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .score {
+      margin-top: 15px;
+      padding: 10px;
+      background: #f8fafc;
+      border-radius: 7px;
+      font-weight: bold;
+    }
+
+    .trend-box {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border-left: 5px solid #64748b;
+    }
+
+    .trend-box.improving {
+      border-left-color: #16a34a;
+      background: #f0fdf4;
+    }
+
+    .trend-box.stable {
+      border-left-color: #eab308;
+      background: #fefce8;
+    }
+
+    .trend-box.worsening {
+      border-left-color: #dc2626;
+      background: #fef2f2;
+    }
+
+    .trend-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .trend-details {
+      margin-top: 8px;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    .best-message {
+      margin-top: 20px;
+      padding: 15px;
+      background: #ecfdf5;
+      color: #166534;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .traffic-section {
+      margin-top: 30px;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    }
+
+    .traffic-section h2 {
+      margin-bottom: 15px;
+    }
+
+    .traffic-info {
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 8px;
+    }
+
+    .traffic-info p {
+      margin-top: 8px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .feature-card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    }
+
+    .feature-card h3 {
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 700px) {
+
+      header {
+        padding: 18px 20px;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+      }
+
+      .welcome h1 {
+        font-size: 26px;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<header>
+
+  <div>
+
+    ```
+    <div class="logo">
+      RouteWise
+    </div>
+
+    <div class="tagline">
+      Intelligent Traffic-Aware Route Recommendation
+    </div>
+    ```
+
+  </div>
+
+  <a href="/logout" class="logout">
+    Logout
+  </a>
+
+</header>
+
+<div class="container">
+
+  <div class="welcome">
+
+    ```
+    <h1>
+      Plan your journey smarter.
+    </h1>
+
+    <p>
+      Compare predicted travel time, traffic conditions,
+      route reliability, and traffic trends before you travel.
+    </p>
+    ```
+
+  </div>
+
+  <div class="search-card">
+
+    ```
+    <h2>
+      Find the Best Route
+    </h2>
+
+
+    <div class="input-group">
+
+      <label for="source">
+        Starting Location
+      </label>
+
+      <input
+              type="text"
+              id="source"
+              placeholder="Enter starting location">
+
+    </div>
+
+
+    <div class="input-group">
+
+      <label for="destination">
+        Destination
+      </label>
+
+      <input
+              type="text"
+              id="destination"
+              placeholder="Enter destination">
+
+    </div>
+
+
+    <button
+            class="find-btn"
+            id="findButton"
+            onclick="findRoute()">
+
+      Find Routes
+
+    </button>
+
+
+    <div
+            id="message"
+            class="message">
+    </div>
+    ```
+
+  </div>
+
+  <div
+          id="trafficSection"
+          class="traffic-section"
+          style="display:none;">
+
+    ```
+    <h2>
+      🚦 Traffic Analysis
+    </h2>
+
+    <div
+            id="trafficInfo"
+            class="traffic-info">
+    </div>
+    ```
+
+  </div>
+
+  <div class="features">
+
+    ```
+    <div class="feature-card">
+
+      <h3>
+        🚦 Traffic Analysis
+      </h3>
+
+      <p>
+        Analyze current and historical traffic conditions
+        to understand how congestion can affect your journey.
+      </p>
+
+    </div>
+
+
+    <div class="feature-card">
+
+      <h3>
+        🤖 Travel-Time Prediction
+      </h3>
+
+      <p>
+        Estimate realistic travel time using historical
+        journey data and traffic conditions.
+      </p>
+
+    </div>
+
+
+    <div class="feature-card">
+
+      <h3>
+        📈 Traffic Trend Detection
+      </h3>
+
+      <p>
+        Detect whether traffic is improving, stable,
+        or worsening using historical traffic records.
+      </p>
+
+    </div>
+    ```
+
+  </div>
+
+</div>
+
+<script>
+
+
+  function findRoute() {
+
+
+    const source =
+            document.getElementById("source")
+                    .value
+                    .trim();
+
+
+    const destination =
+            document.getElementById("destination")
+                    .value
+                    .trim();
+
+
+    const message =
+            document.getElementById("message");
+
+
+    const button =
+            document.getElementById("findButton");
+
+
+    const trafficSection =
+            document.getElementById("trafficSection");
+
+
+    const trafficInfo =
+            document.getElementById("trafficInfo");
+
+
+    if (source === "" || destination === "") {
+
+      message.style.display = "block";
+
+      message.innerText =
+              "Please enter both starting location and destination.";
+
+      return;
+    }
+
+
+    message.style.display = "block";
+
+    message.innerHTML =
+            "🧠 Calculating the best route...";
+
+    button.disabled = true;
+
+    trafficSection.style.display = "none";
+
+
+    const url =
+            "http://localhost:8080/api/routes?source=" +
+            encodeURIComponent(source) +
+            "&destination=" +
+            encodeURIComponent(destination);
+
+
+    fetch(url)
+
+            .then(response => {
+
+              if (!response.ok) {
+
+                throw new Error(
+                        "Failed to fetch routes. Status: " +
+                        response.status
+                );
+              }
+
+              return response.json();
+
+            })
+
+
+            .then(routes => {
+
+
+              message.innerHTML = "";
+
+
+              if (!routes || routes.length === 0) {
+
+                message.innerText =
+                        "No routes found for this journey.";
+
+                return;
+              }
+
+
+              const heading =
+                      document.createElement("h2");
+
+              heading.innerText =
+                      "Route Recommendations";
+
+              message.appendChild(heading);
+
+
+              const journey =
+                      document.createElement("p");
+
+              journey.className =
+                      "journey";
+
+              journey.innerText =
+                      source +
+                      " → " +
+                      destination;
+
+              message.appendChild(journey);
+
+
+              let recommendedRoute = null;
+
+
+              routes.forEach((route, index) => {
+
+
+                const routeDiv =
+                        document.createElement("div");
+
+
+                routeDiv.className =
+                        "route-card";
+
+
+                if (route.recommended === true) {
+
+                  recommendedRoute =
+                          route;
+
+                  routeDiv.classList.add(
+                          "recommended"
+                  );
+                }
+
+
+                let trendClass =
+                        "stable";
+
+
+                let trendEmoji =
+                        "🟡";
+
+
+                if (
+                        route.trafficTrend &&
+                        route.trafficTrend
+                                .toLowerCase() ===
+                        "improving"
+                ) {
+
+                  trendClass =
+                          "improving";
+
+                  trendEmoji =
+                          "🟢";
+
+                } else if (
+                        route.trafficTrend &&
+                        route.trafficTrend
+                                .toLowerCase() ===
+                        "worsening"
+                ) {
+
+                  trendClass =
+                          "worsening";
+
+                  trendEmoji =
+                          "🔴";
+                }
+
+
+                let recommendedBadge =
+                        "";
+
+
+                if (route.recommended === true) {
+
+                  recommendedBadge =
+                          "<span class='recommended-badge'>" +
+                          "⭐ RECOMMENDED" +
+                          "</span>";
+                }
+
+
+                routeDiv.innerHTML =
+
+                        recommendedBadge +
+
+                        "<h3>" +
+                        (index + 1) +
+                        ". " +
+                        route.name +
+                        "</h3>" +
+
+                        "<p>🚗 <strong>Travel Time:</strong> " +
+                        route.travelTime +
+                        " minutes</p>" +
+
+                        "<p>📍 <strong>Distance:</strong> " +
+                        route.distance +
+                        " km</p>" +
+
+                        "<p>🚦 <strong>Traffic:</strong> " +
+                        route.traffic +
+                        "</p>" +
+
+                        "<p>📊 <strong>Reliability:</strong> " +
+                        route.reliability +
+                        "%</p>" +
+
+                        "<p>🤖 <strong>Predicted Travel Time:</strong> " +
+                        route.predictedTravelTime +
+                        " minutes</p>" +
+
+                        "<p>📈 <strong>Average Speed:</strong> " +
+                        route.averageSpeed +
+                        " km/h</p>" +
+
+                        "<p>🎯 <strong>Prediction Confidence:</strong> " +
+                        route.predictionConfidence +
+                        "%</p>" +
+
+                        "<p>📚 <strong>Historical Records:</strong> " +
+                        route.historicalRecords +
+                        "</p>" +
+
+                        "<div class='trend-box " +
+                        trendClass +
+                        "'>" +
+
+                        "<div class='trend-title'>" +
+                        trendEmoji +
+                        " Traffic Trend: " +
+                        route.trafficTrend +
+                        "</div>" +
+
+                        "<div class='trend-details'>" +
+
+                        "<p><strong>Change:</strong> " +
+                        route.trendChange +
+                        " km/h</p>" +
+
+                        "<p><strong>Analysis:</strong> " +
+                        route.trendDescription +
+                        "</p>" +
+
+                        "<p><strong>Score Adjustment:</strong> " +
+                        route.trendAdjustment +
+                        "</p>" +
+
+                        "</div>" +
+
+                        "</div>" +
+
+                        "<div class='score'>" +
+                        "🧠 Route Score: " +
+                        route.score +
+                        "</div>";
+
+
+                message.appendChild(
+                        routeDiv
+                );
+
+              });
+
+
+              if (recommendedRoute !== null) {
+
+
+                const bestMessage =
+                        document.createElement("div");
+
+
+                bestMessage.className =
+                        "best-message";
+
+
+                bestMessage.innerText =
+
+                        "🏆 RouteWise recommends " +
+                        recommendedRoute.name +
+                        " with a score of " +
+                        recommendedRoute.score +
+                        ".";
+
+
+                message.appendChild(
+                        bestMessage
+                );
+              }
+
+
+              /*
+               * Fetch traffic information.
+               */
+
+              fetch(
+                      "http://localhost:8080/api/routes/traffic?source=" +
+                      encodeURIComponent(source) +
+                      "&destination=" +
+                      encodeURIComponent(destination)
+              )
+
+
+                      .then(response => {
+
+                        if (!response.ok) {
+
+                          throw new Error(
+                                  "Traffic request failed"
+                          );
+                        }
+
+                        return response.json();
+
+                      })
+
+
+                      .then(traffic => {
+
+
+                        trafficSection.style.display =
+                                "block";
+
+
+                        let trafficEmoji =
+                                "🟡";
+
+
+                        if (
+                                traffic.traffic ===
+                                "Low"
+                        ) {
+
+                          trafficEmoji =
+                                  "🟢";
+
+                        } else if (
+                                traffic.traffic ===
+                                "Heavy"
+                        ) {
+
+                          trafficEmoji =
+                                  "🔴";
+                        }
+
+
+                        trafficInfo.innerHTML =
+
+                                "<p><strong>Journey:</strong> " +
+                                source +
+                                " → " +
+                                destination +
+                                "</p>" +
+
+                                "<p><strong>Current Traffic:</strong> " +
+                                trafficEmoji +
+                                " " +
+                                traffic.traffic +
+                                "</p>" +
+
+                                "<p><strong>Traffic Level:</strong> " +
+                                traffic.traffic +
+                                "</p>";
+
+                      })
+
+
+                      .catch(error => {
+
+                        console.error(
+                                "Traffic error:",
+                                error
+                        );
+
+                      });
+
+            })
+
+
+            .catch(error => {
+
+              console.error(
+                      "Route error:",
+                      error
+              );
+
+              message.innerText =
+                      "Unable to calculate routes and travel time. Please try again.";
+
+            })
+
+
+            .finally(() => {
+
+              button.disabled = false;
+
+            });
+
+  }
+
+</script>
+
+</body>
+
+</html>
+
+
+
+
+
+

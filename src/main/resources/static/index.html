@@ -1,0 +1,2180 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>RouteWise | Smart Route Recommendation</title>
+
+  <!-- Leaflet Map -->
+  <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 18px 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .tagline {
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-top: 4px;
+    }
+
+    .logout {
+      color: white;
+      text-decoration: none;
+      padding: 9px 18px;
+      border: 1px solid #64748b;
+      border-radius: 7px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .welcome {
+      margin-bottom: 30px;
+    }
+
+    .welcome h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .welcome p {
+      color: #64748b;
+    }
+
+    .search-card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .search-card h2 {
+      margin-bottom: 25px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    .find-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .find-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .find-btn:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin-top: 20px;
+    }
+
+    .journey {
+      margin: 8px 0 15px;
+      color: #475569;
+      font-size: 16px;
+    }
+
+    .route-card {
+      margin-top: 15px;
+      padding: 22px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      color: #1f2937;
+    }
+
+    .route-card h3 {
+      margin-bottom: 12px;
+      color: #111827;
+    }
+
+    .route-card p {
+      margin-top: 8px;
+      color: #475569;
+    }
+
+    .recommended {
+      border: 2px solid #2563eb;
+      box-shadow: 0 5px 18px rgba(37,99,235,0.15);
+    }
+
+    .recommended-badge {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 6px 12px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .score {
+      margin-top: 15px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 7px;
+      font-weight: bold;
+      font-size: 17px;
+    }
+
+    .best-message {
+      margin-top: 20px;
+      padding: 15px;
+      background: #ecfdf5;
+      color: #166534;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+
+    /* =====================================
+       MAP
+    ===================================== */
+
+    .map-section {
+      margin-top: 30px;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    }
+
+    .map-section h2 {
+      margin-bottom: 8px;
+    }
+
+    .map-description {
+      color: #64748b;
+      margin-bottom: 18px;
+    }
+
+    #map {
+      width: 100%;
+      height: 500px;
+      border-radius: 12px;
+      border: 1px solid #cbd5e1;
+      overflow: hidden;
+    }
+
+
+    /* =====================================
+       DIRECTIONS
+    ===================================== */
+
+    .directions {
+      margin-top: 20px;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .directions h4 {
+      margin-bottom: 18px;
+      font-size: 18px;
+      color: #111827;
+    }
+
+    .direction-step {
+      position: relative;
+      display: flex;
+      gap: 14px;
+      padding: 12px 0;
+      min-height: 70px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .direction-step:last-child {
+      border-bottom: none;
+    }
+
+    .direction-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      top: 42px;
+      bottom: -12px;
+      width: 2px;
+      background: #cbd5e1;
+    }
+
+    .direction-icon {
+      position: relative;
+      z-index: 2;
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
+      border-radius: 50%;
+      background: #eff6ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+    }
+
+    .direction-content {
+      flex: 1;
+    }
+
+    .direction-instruction {
+      font-weight: bold;
+      color: #111827;
+      font-size: 15px;
+    }
+
+    .direction-road {
+      margin-top: 5px;
+      color: #475569;
+      font-size: 14px;
+    }
+
+    .direction-meta {
+      margin-top: 6px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .direction-arrival {
+      background: #ecfdf5;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .direction-arrival .direction-icon {
+      background: #dcfce7;
+    }
+
+
+    /* =====================================
+       TRAFFIC
+    ===================================== */
+
+    .traffic-section,
+    .analytics-section {
+      margin-top: 30px;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    }
+
+    .traffic-section h2,
+    .analytics-section h2 {
+      margin-bottom: 15px;
+    }
+
+    .traffic-info {
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 8px;
+    }
+
+    .traffic-info p {
+      margin-top: 8px;
+    }
+
+
+    /* =====================================
+       ANALYTICS
+    ===================================== */
+
+    .analytics-card {
+      margin-top: 15px;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .analytics-card h3 {
+      margin-bottom: 15px;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(2,1fr);
+      gap: 12px;
+    }
+
+    .analytics-item {
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .analytics-item strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #475569;
+    }
+
+    .analytics-item span {
+      font-size: 16px;
+      font-weight: bold;
+      color: #111827;
+    }
+
+    .performance-rating {
+      display: inline-block;
+      margin-bottom: 15px;
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-weight: bold;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .performance-good {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .performance-average {
+      background: #ffedd5;
+      color: #9a3412;
+    }
+
+    .performance-poor {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .trend-improving {
+      color: #15803d;
+    }
+
+    .trend-worsening {
+      color: #dc2626;
+    }
+
+    .trend-stable {
+      color: #475569;
+    }
+
+    .analysis-summary {
+      margin-top: 15px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      border-left: 4px solid #2563eb;
+      line-height: 1.6;
+    }
+
+
+    /* =====================================
+       FEATURES
+    ===================================== */
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .feature-card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    }
+
+    .feature-card h3 {
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .error-message {
+      margin-top: 20px;
+      padding: 15px;
+      background: #fee2e2;
+      color: #991b1b;
+      border-radius: 8px;
+    }
+
+
+    /* =====================================
+       MOBILE
+    ===================================== */
+
+    @media(max-width:700px) {
+
+      header {
+        padding: 18px 20px;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+      }
+
+      .analytics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .welcome h1 {
+        font-size: 26px;
+      }
+
+      .direction-step {
+        gap: 10px;
+      }
+
+      #map {
+        height: 400px;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+  <div>
+
+    <div class="logo">
+      RouteWise
+    </div>
+
+    <div class="tagline">
+      Intelligent Traffic-Aware Route Recommendation
+    </div>
+
+  </div>
+
+  <a href="/logout" class="logout">
+    Logout
+  </a>
+
+</header>
+
+
+<div class="container">
+
+
+  <div class="welcome">
+
+    <h1>
+      Plan your journey smarter.
+    </h1>
+
+    <p>
+      Compare predicted travel time, traffic conditions,
+      route reliability, and historical performance before you travel.
+    </p>
+
+  </div>
+
+
+  <!-- SEARCH -->
+
+  <div class="search-card">
+
+    <h2>
+      Find the Best Route
+    </h2>
+
+
+    <div class="input-group">
+
+      <label for="source">
+        Starting Location
+      </label>
+
+      <input
+              type="text"
+              id="source"
+              placeholder="Enter starting location">
+
+    </div>
+
+
+    <div class="input-group">
+
+      <label for="destination">
+        Destination
+      </label>
+
+      <input
+              type="text"
+              id="destination"
+              placeholder="Enter destination">
+
+    </div>
+
+
+    <button
+            class="find-btn"
+            id="findButton"
+            onclick="findRoute()">
+
+      Find Routes
+
+    </button>
+
+
+    <div
+            id="message"
+            class="message">
+    </div>
+
+  </div>
+
+
+  <!-- MAP -->
+
+  <div
+          id="mapSection"
+          class="map-section"
+          style="display:none;">
+
+    <h2>
+      🗺️ Route Map
+    </h2>
+
+    <p class="map-description">
+      Visual representation of the recommended route.
+    </p>
+
+    <div id="map"></div>
+
+  </div>
+
+
+  <!-- TRAFFIC -->
+
+  <div
+          id="trafficSection"
+          class="traffic-section"
+          style="display:none;">
+
+    <h2>
+      🚦 Traffic Analysis
+    </h2>
+
+    <div
+            id="trafficInfo"
+            class="traffic-info">
+    </div>
+
+  </div>
+
+
+  <!-- ANALYTICS -->
+
+  <div
+          id="analyticsSection"
+          class="analytics-section"
+          style="display:none;">
+
+    <h2>
+      📊 Route Performance Analytics
+    </h2>
+
+    <p style="color:#64748b;margin:15px 0;">
+
+      Analyze historical performance, traffic trends,
+      prediction confidence, and route quality.
+
+    </p>
+
+    <div id="analyticsContainer"></div>
+
+  </div>
+
+
+  <!-- FEATURES -->
+
+  <div class="features">
+
+
+    <div class="feature-card">
+
+      <h3>
+        🚦 Traffic Analysis
+      </h3>
+
+      <p>
+        Analyze current and historical traffic conditions
+        to understand how congestion can affect your journey.
+      </p>
+
+    </div>
+
+
+    <div class="feature-card">
+
+      <h3>
+        🤖 Travel-Time Prediction
+      </h3>
+
+      <p>
+        Estimate realistic travel time using historical
+        journey data and traffic conditions.
+      </p>
+
+    </div>
+
+
+    <div class="feature-card">
+
+      <h3>
+        📊 Route Reliability
+      </h3>
+
+      <p>
+        Compare routes based on reliability,
+        historical performance, and traffic trends.
+      </p>
+
+    </div>
+
+
+  </div>
+
+</div>
+
+
+<!-- Leaflet -->
+
+<script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<script>
+
+
+  /* =====================================
+     GLOBAL MAP VARIABLES
+  ===================================== */
+
+  let routeMap = null;
+
+  let routeLine = null;
+
+  let startMarker = null;
+
+  let destinationMarker = null;
+
+
+  /* =====================================
+     NUMBER FORMATTER
+  ===================================== */
+
+  function formatNumber(value, decimals = 2) {
+
+    if (value === null || value === undefined) {
+      return "0";
+    }
+
+    const number = Number(value);
+
+    if (isNaN(number)) {
+      return value;
+    }
+
+    return number.toFixed(decimals);
+  }
+
+
+  /* =====================================
+     TRAFFIC EMOJI
+  ===================================== */
+
+  function getTrafficEmoji(traffic) {
+
+    if (traffic === "Low") {
+      return "🟢";
+    }
+
+    if (traffic === "Moderate") {
+      return "🟡";
+    }
+
+    if (traffic === "Heavy") {
+      return "🔴";
+    }
+
+    return "⚪";
+  }
+
+
+  /* =====================================
+     TREND EMOJI
+  ===================================== */
+
+  function getTrendEmoji(trend) {
+
+    if (trend === "Improving") {
+      return "📈";
+    }
+
+    if (trend === "Worsening") {
+      return "📉";
+    }
+
+    return "➡️";
+  }
+
+
+  /* =====================================
+     DIRECTION ICON
+  ===================================== */
+
+  function getDirectionIcon(instruction) {
+
+    const text =
+            instruction.toLowerCase();
+
+
+    if (text.includes("arrive")) {
+      return "🏁";
+    }
+
+
+    if (text.includes("start")) {
+      return "🔵";
+    }
+
+
+    if (text.includes("left")) {
+      return "↰";
+    }
+
+
+    if (text.includes("right")) {
+      return "↱";
+    }
+
+
+    if (text.includes("fork")) {
+      return "🔀";
+    }
+
+
+    if (text.includes("roundabout")) {
+      return "🔄";
+    }
+
+
+    if (text.includes("continue")) {
+      return "⬆️";
+    }
+
+
+    if (text.includes("u-turn")) {
+      return "↩️";
+    }
+
+
+    return "➡️";
+  }
+
+
+  /* =====================================
+     CREATE DIRECTIONS
+  ===================================== */
+
+  function createDirections(directions) {
+
+    if (!directions ||
+            directions.length === 0) {
+
+      return "";
+    }
+
+
+    let html = `
+
+      <div class="directions">
+
+        <h4>
+          🧭 Turn-by-Turn Directions
+        </h4>
+
+    `;
+
+
+    directions.forEach(step => {
+
+
+      const instruction =
+              step.instruction ||
+              "Continue";
+
+
+      const icon =
+              getDirectionIcon(
+                      instruction
+              );
+
+
+      const isArrival =
+              instruction
+                      .toLowerCase()
+                      .includes("arrive");
+
+
+      html += `
+
+        <div class="direction-step
+          ${isArrival ? "direction-arrival" : ""}">
+
+          <div class="direction-icon">
+            ${icon}
+          </div>
+
+          <div class="direction-content">
+
+            <div class="direction-instruction">
+              ${instruction}
+            </div>
+
+            ${
+              step.road
+                      ? `
+                  <div class="direction-road">
+                    🛣️ ${step.road}
+                  </div>
+                `
+                      : ""
+      }
+
+            <div class="direction-meta">
+
+              📍
+              ${formatNumber(
+              step.distance,
+              0
+      )}
+              m
+
+              &nbsp; • &nbsp;
+
+              ⏱️
+              ${step.duration}
+              min
+
+            </div>
+
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+
+    html += `
+
+      </div>
+
+    `;
+
+
+    return html;
+  }
+
+
+  /* =====================================
+     CREATE ROUTE CARD
+  ===================================== */
+
+  function createRouteCard(
+          route,
+          index
+  ) {
+
+    const routeDiv =
+            document.createElement("div");
+
+
+    routeDiv.className =
+            "route-card";
+
+
+    if (route.recommended === true) {
+
+      routeDiv.classList.add(
+              "recommended"
+      );
+
+    }
+
+
+    let badge = "";
+
+
+    if (route.recommended === true) {
+
+      badge = `
+
+        <span class="recommended-badge">
+
+          ⭐ RECOMMENDED
+
+        </span>
+
+      `;
+
+    }
+
+
+    routeDiv.innerHTML = `
+
+      ${badge}
+
+
+      <h3>
+
+        ${index + 1}.
+        ${route.name || "Route"}
+
+      </h3>
+
+
+      <p>
+
+        🚗 <strong>
+          Travel Time:
+        </strong>
+
+        ${route.travelTime ?? route.estimatedTime ?? 0}
+        minutes
+
+      </p>
+
+
+      <p>
+
+        📍 <strong>
+          Distance:
+        </strong>
+
+        ${formatNumber(
+            route.distance,
+            2
+    )}
+        km
+
+      </p>
+
+
+      <p>
+
+        🚦 <strong>
+          Traffic:
+        </strong>
+
+        ${getTrafficEmoji(
+            route.traffic
+    )}
+
+        ${route.traffic || "Unknown"}
+
+      </p>
+
+
+      <p>
+
+        📊 <strong>
+          Reliability:
+        </strong>
+
+        ${route.reliability ?? 0}%
+
+      </p>
+
+
+      <p>
+
+        🤖 <strong>
+          Predicted Travel Time:
+        </strong>
+
+        ${route.predictedTravelTime ?? route.estimatedTime ?? 0}
+        minutes
+
+      </p>
+
+
+      <p>
+
+        📈 <strong>
+          Average Speed:
+        </strong>
+
+        ${formatNumber(
+            route.averageSpeed,
+            2
+    )}
+        km/h
+
+      </p>
+
+
+      <p>
+
+        🎯 <strong>
+          Prediction Confidence:
+        </strong>
+
+        ${route.predictionConfidence ?? 0}%
+
+      </p>
+
+
+      <p>
+
+        📚 <strong>
+          Historical Records:
+        </strong>
+
+        ${route.historicalRecords ?? 0}
+
+      </p>
+
+
+      <p>
+
+        📈 <strong>
+          Traffic Trend:
+        </strong>
+
+        ${getTrendEmoji(
+            route.trafficTrend
+    )}
+
+        ${route.trafficTrend || "Stable"}
+
+      </p>
+
+
+      <div class="score">
+
+        🧠 Route Score:
+
+        ${formatNumber(
+            route.score,
+            2
+    )}
+
+      </div>
+
+
+      ${createDirections(
+            route.directions
+    )}
+
+    `;
+
+
+    return routeDiv;
+  }
+
+
+  /* =====================================
+     DISPLAY MAP
+  ===================================== */
+
+  function displayRouteMap(route) {
+
+    const mapSection =
+            document.getElementById(
+                    "mapSection"
+            );
+
+
+    const geometry =
+            route.geometry;
+
+
+    if (!geometry ||
+            !Array.isArray(geometry) ||
+            geometry.length === 0) {
+
+      mapSection.style.display =
+              "none";
+
+      console.log(
+              "No geometry available for map."
+      );
+
+      return;
+    }
+
+
+    mapSection.style.display =
+            "block";
+
+
+    /*
+     * Remove previous map
+     */
+
+    if (routeMap) {
+
+      routeMap.remove();
+
+      routeMap = null;
+
+    }
+
+
+    /*
+     * Create map
+     */
+
+    routeMap =
+            L.map("map");
+
+
+    /*
+     * OpenStreetMap tiles
+     */
+
+    L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+              maxZoom: 19,
+
+              attribution:
+                      "&copy; OpenStreetMap contributors"
+            }
+    ).addTo(routeMap);
+
+
+    /*
+     * OSRM geometry is:
+     *
+     * [longitude, latitude]
+     *
+     * Leaflet needs:
+     *
+     * [latitude, longitude]
+     */
+
+    const coordinates =
+            geometry.map(
+                    point => [
+                      Number(point[1]),
+                      Number(point[0])
+                    ]
+            );
+
+
+    /*
+     * Draw route
+     */
+
+    routeLine =
+            L.polyline(
+                    coordinates,
+                    {
+                      weight: 6
+                    }
+            ).addTo(routeMap);
+
+
+    /*
+     * Start marker
+     */
+
+    startMarker =
+            L.marker(
+                    coordinates[0]
+            )
+                    .addTo(routeMap)
+                    .bindPopup(
+                            "🚗 <strong>Starting Location</strong>"
+                    );
+
+
+    /*
+     * Destination marker
+     */
+
+    destinationMarker =
+            L.marker(
+                    coordinates[
+                    coordinates.length - 1
+                            ]
+            )
+                    .addTo(routeMap)
+                    .bindPopup(
+                            "🏁 <strong>Destination</strong>"
+                    );
+
+
+    /*
+     * Fit map to route
+     */
+
+    routeMap.fitBounds(
+            routeLine.getBounds(),
+            {
+              padding: [
+                30,
+                30
+              ]
+            }
+    );
+
+
+    /*
+     * Fix map rendering after
+     * display changes
+     */
+
+    setTimeout(
+            function() {
+
+              routeMap.invalidateSize();
+
+            },
+            200
+    );
+
+  }
+
+
+  /* =====================================
+     GET MAP GEOMETRY
+  ===================================== */
+
+  function loadMapGeometry(
+          source,
+          destination,
+          recommendedRoute
+  ) {
+
+    const mapUrl =
+            "/api/routes/map?source=" +
+            encodeURIComponent(source) +
+            "&destination=" +
+            encodeURIComponent(destination);
+
+
+    fetch(mapUrl)
+
+            .then(response => {
+
+              if (!response.ok) {
+
+                throw new Error(
+                        "Map request failed: " +
+                        response.status
+                );
+
+              }
+
+              return response.json();
+
+            })
+
+
+            .then(mapData => {
+
+              /*
+               * Add geometry to the
+               * recommended route
+               */
+
+              recommendedRoute.geometry =
+                      mapData.geometry;
+
+
+              /*
+               * Display map
+               */
+
+              displayRouteMap(
+                      recommendedRoute
+              );
+
+            })
+
+
+            .catch(error => {
+
+              console.error(
+                      "Map error:",
+                      error
+              );
+
+              document
+                      .getElementById(
+                              "mapSection"
+                      )
+                      .style.display = "none";
+
+            });
+
+  }
+
+
+  /* =====================================
+     FIND ROUTE
+  ===================================== */
+
+  function findRoute() {
+
+
+    const source =
+            document
+                    .getElementById("source")
+                    .value
+                    .trim();
+
+
+    const destination =
+            document
+                    .getElementById("destination")
+                    .value
+                    .trim();
+
+
+    const message =
+            document.getElementById(
+                    "message"
+            );
+
+
+    const button =
+            document.getElementById(
+                    "findButton"
+            );
+
+
+    const trafficSection =
+            document.getElementById(
+                    "trafficSection"
+            );
+
+
+    const trafficInfo =
+            document.getElementById(
+                    "trafficInfo"
+            );
+
+
+    const analyticsSection =
+            document.getElementById(
+                    "analyticsSection"
+            );
+
+
+    const analyticsContainer =
+            document.getElementById(
+                    "analyticsContainer"
+            );
+
+
+    const mapSection =
+            document.getElementById(
+                    "mapSection"
+            );
+
+
+    /* =================================
+       VALIDATION
+    ================================= */
+
+    if (!source ||
+            !destination) {
+
+      message.innerHTML = `
+
+        <div class="error-message">
+
+          Please enter both starting
+          location and destination.
+
+        </div>
+
+      `;
+
+      return;
+    }
+
+
+    button.disabled = true;
+
+
+    message.innerHTML = `
+
+      <p>
+        🧠 Calculating the best routes...
+      </p>
+
+    `;
+
+
+    trafficSection.style.display =
+            "none";
+
+
+    analyticsSection.style.display =
+            "none";
+
+
+    mapSection.style.display =
+            "none";
+
+
+    analyticsContainer.innerHTML =
+            "";
+
+
+    /*
+     * Remove old map
+     */
+
+    if (routeMap) {
+
+      routeMap.remove();
+
+      routeMap = null;
+
+    }
+
+
+    /*
+     * MAIN ROUTE API
+     */
+
+    const url =
+            "/api/routes?source=" +
+            encodeURIComponent(source) +
+            "&destination=" +
+            encodeURIComponent(destination);
+
+
+    fetch(url)
+
+
+            .then(response => {
+
+
+              if (!response.ok) {
+
+                throw new Error(
+                        "Route request failed: " +
+                        response.status
+                );
+
+              }
+
+
+              return response.json();
+
+            })
+
+
+            .then(routes => {
+
+
+              message.innerHTML = "";
+
+
+              if (!routes ||
+                      routes.length === 0) {
+
+                message.innerHTML = `
+
+            <div class="error-message">
+
+              No routes found
+              for this journey.
+
+            </div>
+
+          `;
+
+                return;
+
+              }
+
+
+              /* =================================
+                 HEADING
+              ================================= */
+
+              const heading =
+                      document.createElement(
+                              "h2"
+                      );
+
+
+              heading.innerText =
+                      "Route Recommendations";
+
+
+              message.appendChild(
+                      heading
+              );
+
+
+              /* =================================
+                 JOURNEY
+              ================================= */
+
+              const journey =
+                      document.createElement(
+                              "p"
+                      );
+
+
+              journey.className =
+                      "journey";
+
+
+              journey.innerText =
+                      source +
+                      " → " +
+                      destination;
+
+
+              message.appendChild(
+                      journey
+              );
+
+
+              /* =================================
+                 FIND RECOMMENDED
+              ================================= */
+
+              let recommendedRoute =
+                      null;
+
+
+              routes.forEach(
+                      (route, index) => {
+
+
+                        if (
+                                route.recommended ===
+                                true
+                        ) {
+
+                          recommendedRoute =
+                                  route;
+
+                        }
+
+
+                        const routeCard =
+                                createRouteCard(
+                                        route,
+                                        index
+                                );
+
+
+                        message.appendChild(
+                                routeCard
+                        );
+
+                      }
+              );
+
+
+              /*
+               * Fallback if backend does not
+               * mark one as recommended
+               */
+
+              if (!recommendedRoute) {
+
+                recommendedRoute =
+                        routes[0];
+
+              }
+
+
+              /* =================================
+                 BEST ROUTE
+              ================================= */
+
+              if (recommendedRoute) {
+
+
+                const bestMessage =
+                        document.createElement(
+                                "div"
+                        );
+
+
+                bestMessage.className =
+                        "best-message";
+
+
+                bestMessage.innerText =
+
+                        "🏆 RouteWise recommends " +
+                        (
+                                recommendedRoute.name ||
+                                "this route"
+                        ) +
+                        " with a score of " +
+                        formatNumber(
+                                recommendedRoute.score,
+                                2
+                        ) +
+                        ".";
+
+
+                message.appendChild(
+                        bestMessage
+                );
+
+              }
+
+
+              /* =================================
+                 LOAD MAP
+              ================================= */
+
+              loadMapGeometry(
+                      source,
+                      destination,
+                      recommendedRoute
+              );
+
+
+              /* =================================
+                 TRAFFIC ANALYSIS
+              ================================= */
+
+              trafficSection.style.display =
+                      "block";
+
+
+              const recommended =
+                      recommendedRoute ||
+                      routes[0];
+
+
+              trafficInfo.innerHTML = `
+
+          <p>
+
+            <strong>
+              Journey:
+            </strong>
+
+            ${source}
+            →
+            ${destination}
+
+          </p>
+
+
+          <p>
+
+            <strong>
+              Current Traffic:
+            </strong>
+
+            ${getTrafficEmoji(
+                      recommended.traffic
+              )}
+
+            ${recommended.traffic}
+
+          </p>
+
+
+          <p>
+
+            <strong>
+              Traffic Level:
+            </strong>
+
+            ${recommended.traffic}
+
+          </p>
+
+
+          <p>
+
+            <strong>
+              Traffic Trend:
+            </strong>
+
+            ${getTrendEmoji(
+                      recommended.trafficTrend
+              )}
+
+            ${recommended.trafficTrend}
+
+          </p>
+
+
+          <p>
+
+            <strong>
+              Trend Change:
+            </strong>
+
+            ${formatNumber(
+                      recommended.trendChange,
+                      2
+              )}%
+
+          </p>
+
+        `;
+
+
+              /* =================================
+                 ANALYTICS
+              ================================= */
+
+              analyticsSection.style.display =
+                      "block";
+
+
+              routes.forEach(
+                      (route, index) => {
+
+
+                        const card =
+                                document.createElement(
+                                        "div"
+                                );
+
+
+                        card.className =
+                                "analytics-card";
+
+
+                        let ratingClass =
+                                "performance-rating";
+
+
+                        if (
+                                route.performanceRating ===
+                                "Good"
+                        ) {
+
+                          ratingClass +=
+                                  " performance-good";
+
+                        }
+
+                        else if (
+                                route.performanceRating ===
+                                "Average"
+                        ) {
+
+                          ratingClass +=
+                                  " performance-average";
+
+                        }
+
+                        else if (
+                                route.performanceRating ===
+                                "Poor"
+                        ) {
+
+                          ratingClass +=
+                                  " performance-poor";
+
+                        }
+
+
+                        let trendClass =
+                                "trend-stable";
+
+
+                        if (
+                                route.trafficTrend ===
+                                "Improving"
+                        ) {
+
+                          trendClass =
+                                  "trend-improving";
+
+                        }
+
+                        else if (
+                                route.trafficTrend ===
+                                "Worsening"
+                        ) {
+
+                          trendClass =
+                                  "trend-worsening";
+
+                        }
+
+
+                        const recommendationText =
+
+                                route.recommended === true
+
+                                        ?
+
+                                        "🏆 This is currently the best-performing route."
+
+                                        :
+
+                                        "ℹ️ This route is currently ranked below the recommended route.";
+
+
+                        card.innerHTML = `
+
+              <h3>
+
+                ${index + 1}.
+                ${route.name}
+
+              </h3>
+
+
+              <span class="${ratingClass}">
+
+                Performance:
+                ${route.performanceRating}
+
+              </span>
+
+
+              <div class="analytics-grid">
+
+
+                <div class="analytics-item">
+
+                  <strong>
+                    📚 Historical Records
+                  </strong>
+
+                  <span>
+                    ${route.historicalRecords}
+                  </span>
+
+                </div>
+
+
+                <div class="analytics-item">
+
+                  <strong>
+                    📈 Average Speed
+                  </strong>
+
+                  <span>
+
+                    ${formatNumber(
+                                route.averageSpeed,
+                                2
+                        )}
+                    km/h
+
+                  </span>
+
+                </div>
+
+
+                <div class="analytics-item">
+
+                  <strong>
+                    🤖 Predicted Travel Time
+                  </strong>
+
+                  <span>
+
+                    ${route.predictedTravelTime}
+                    minutes
+
+                  </span>
+
+                </div>
+
+
+                <div class="analytics-item">
+
+                  <strong>
+                    🎯 Prediction Confidence
+                  </strong>
+
+                  <span>
+
+                    ${route.predictionConfidence}%
+
+                  </span>
+
+                </div>
+
+
+                <div class="analytics-item">
+
+                  <strong>
+                    🚦 Traffic Trend
+                  </strong>
+
+                  <span class="${trendClass}">
+
+                    ${getTrendEmoji(
+                                route.trafficTrend
+                        )}
+
+                    ${route.trafficTrend}
+
+                  </span>
+
+                </div>
+
+
+                <div class="analytics-item">
+
+                  <strong>
+                    📊 Trend Change
+                  </strong>
+
+                  <span>
+
+                    ${formatNumber(
+                                route.trendChange,
+                                2
+                        )}%
+
+                  </span>
+
+                </div>
+
+
+                <div class="analytics-item">
+
+                  <strong>
+                    🧠 Base Score
+                  </strong>
+
+                  <span>
+
+                    ${formatNumber(
+                                route.baseScore,
+                                2
+                        )}
+
+                  </span>
+
+                </div>
+
+
+                <div class="analytics-item">
+
+                  <strong>
+                    ⚖️ Trend Adjustment
+                  </strong>
+
+                  <span>
+
+                    ${formatNumber(
+                                route.trendAdjustment,
+                                2
+                        )}
+
+                  </span>
+
+                </div>
+
+
+                <div class="analytics-item">
+
+                  <strong>
+                    🏆 Final Route Score
+                  </strong>
+
+                  <span>
+
+                    ${formatNumber(
+                                route.score,
+                                2
+                        )}
+
+                  </span>
+
+                </div>
+
+
+              </div>
+
+
+              <div class="analysis-summary">
+
+                <strong>
+                  Analysis:
+                </strong>
+
+                <br>
+
+                ${route.trendDescription}
+
+                <br><br>
+
+                ${recommendationText}
+
+              </div>
+
+            `;
+
+
+                        analyticsContainer.appendChild(
+                                card
+                        );
+
+                      }
+              );
+
+            })
+
+
+            .catch(error => {
+
+
+              console.error(
+                      "Route error:",
+                      error
+              );
+
+
+              message.innerHTML = `
+
+          <div class="error-message">
+
+            Unable to calculate routes.
+            Please make sure the backend
+            is running.
+
+          </div>
+
+        `;
+
+            })
+
+
+            .finally(() => {
+
+              button.disabled = false;
+
+            });
+
+  }
+
+
+  /* =====================================
+     ENTER KEY SUPPORT
+  ===================================== */
+
+  document
+          .getElementById("source")
+          .addEventListener(
+                  "keydown",
+                  function(event) {
+
+                    if (event.key === "Enter") {
+
+                      findRoute();
+
+                    }
+
+                  }
+          );
+
+
+  document
+          .getElementById("destination")
+          .addEventListener(
+                  "keydown",
+                  function(event) {
+
+                    if (event.key === "Enter") {
+
+                      findRoute();
+
+                    }
+
+                  }
+          );
+
+
+</script>
+
+
+</body>
+
+</html>
