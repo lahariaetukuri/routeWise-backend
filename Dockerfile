@@ -3,6 +3,7 @@ FROM maven:3.9.0-eclipse-temurin-19 AS build
 WORKDIR /app
 
 COPY . .
+COPY maven-settings.xml /root/.m2/settings.xml
 
 RUN mvn -B -DskipTests package
 
