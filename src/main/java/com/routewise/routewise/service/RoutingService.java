@@ -391,121 +391,96 @@ public class RoutingService {
     private Map<String, Double> geocode(
             String location) throws Exception {
 
-        String cleanedLocation =
-                location.trim();
+        if (location == null || location.isBlank()) {
+            return null;
+        }
+
+        String cleanedLocation = location.trim();
 
         String[] searches = {
-
-                cleanedLocation
-                        + ", Hyderabad, Telangana, India",
-
-                cleanedLocation
-                        + ", Telangana, India",
-
-                cleanedLocation
-                        + ", India",
-
+                cleanedLocation + ", Hyderabad, Telangana, India",
+                cleanedLocation + ", Telangana, India",
+                cleanedLocation + ", India",
                 cleanedLocation
         };
 
         for (String searchLocation : searches) {
+            Thread.sleep(1100);
 
-            String encodedLocation =
-                    URLEncoder.encode(
-                            searchLocation,
-                            StandardCharsets.UTF_8
-                    );
+            String encodedLocation = URLEncoder.encode(
+                    searchLocation,
+                    StandardCharsets.UTF_8
+            );
 
             String url =
                     "https://nominatim.openstreetmap.org/search"
-                            + "?q="
-                            + encodedLocation
-                            + "&format=json"
-                            + "&limit=1";
+                            + "?q=" + encodedLocation
+                            + "&format=jsonv2"
+                            + "&limit=3"
+                            + "&countrycodes=in"
+                            + "&accept-language=en";
 
-            HttpRequest request =
-                    HttpRequest.newBuilder()
-                            .uri(URI.create(url))
-                            .header(
-                                    "User-Agent",
-                                    "RouteWise-College-Project/1.0"
-                            )
-                            .header(
-                                    "Accept",
-                                    "application/json"
-                            )
-                            .GET()
-                            .build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header(
+                            "User-Agent",
+                            "RouteWise-College-Project/1.0"
+                    )
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build();
 
-            HttpResponse<String> response =
-                    httpClient.send(
-                            request,
-                            HttpResponse.BodyHandlers.ofString()
-                    );
+            HttpResponse<String> response = httpClient.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
 
             if (response.statusCode() != 200) {
                 continue;
             }
 
-            String body =
-                    response.body();
+            JsonNode results = objectMapper.readTree(
+                    response.body()
+            );
 
-            if (body == null ||
-                    body.isBlank() ||
-                    body.equals("[]")) {
-
+            if (!results.isArray() || results.isEmpty()) {
                 continue;
             }
 
-            String latitude =
-                    extractString(
-                            body,
-                            "\"lat\":\""
+            for (JsonNode result : results) {
+                JsonNode latitudeNode = result.get("lat");
+                JsonNode longitudeNode = result.get("lon");
+
+                if (latitudeNode == null || longitudeNode == null) {
+                    continue;
+                }
+
+                try {
+                    double lat = Double.parseDouble(
+                            latitudeNode.asText()
+                    );
+                    double lon = Double.parseDouble(
+                            longitudeNode.asText()
                     );
 
-            String longitude =
-                    extractString(
-                            body,
-                            "\"lon\":\""
-                    );
+                    if (!Double.isFinite(lat)
+                            || !Double.isFinite(lon)
+                            || lat < -90 || lat > 90
+                            || lon < -180 || lon > 180) {
+                        continue;
+                    }
 
-            if (latitude == null ||
-                    longitude == null) {
+                    Map<String, Double> coordinates =
+                            new LinkedHashMap<>();
 
-                continue;
-            }
+                    coordinates.put("lat", lat);
+                    coordinates.put("lon", lon);
 
-            try {
+                    return coordinates;
 
-                double lat =
-                        Double.parseDouble(
-                                latitude
-                        );
-
-                double lon =
-                        Double.parseDouble(
-                                longitude
-                        );
-
-                Map<String, Double>
-                        coordinates =
-                        new LinkedHashMap<>();
-
-                coordinates.put(
-                        "lat",
-                        lat
-                );
-
-                coordinates.put(
-                        "lon",
-                        lon
-                );
-
-                return coordinates;
-
-            } catch (NumberFormatException e) {
-
-                continue;
+                } catch (NumberFormatException exception) {
+                    // Try the next result.
+                }
             }
         }
 
