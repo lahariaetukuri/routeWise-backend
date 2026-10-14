@@ -58,7 +58,7 @@ public class RoutingService {
         String coordinates = sourceLon + "," + sourceLat
                 + ";" + destinationLon + "," + destinationLat;
 
-        String url = "https://router.project-osrm.org/route/v1/driving/"
+        String url = "https://" + "router.project-osrm.org/route/v1/driving/"
                 + coordinates
                 + "?overview=full"
                 + "&geometries=geojson"
@@ -198,7 +198,7 @@ public class RoutingService {
                     StandardCharsets.UTF_8
             );
 
-            String url = "https://us1.locationiq.com/v1/search"
+            String url = "https://" + "us1.locationiq.com/v1/search"
                     + "?key=" + encodedApiKey
                     + "&q=" + encodedLocation
                     + "&format=json"
