@@ -1,4 +1,3 @@
-
 package com.routewise.routewise.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,11 +32,8 @@ public class RoutingService {
     }
 
     /*
-     * =====================================================
      * GET ROUTE
-     * =====================================================
      */
-
     public Map<String, Object> getRoute(
             String source,
             String destination) throws Exception {
@@ -46,43 +42,33 @@ public class RoutingService {
         Map<String, Double> destinationCoordinates = geocode(destination);
 
         if (sourceCoordinates == null) {
-            throw new RuntimeException(
-                    "Unable to find source: " + source
-            );
+            throw new RuntimeException("Unable to find source: " + source);
         }
 
         if (destinationCoordinates == null) {
-            throw new RuntimeException(
-                    "Unable to find destination: " + destination
-            );
+            throw new RuntimeException("Unable to find destination: " + destination);
         }
 
         double sourceLat = sourceCoordinates.get("lat");
         double sourceLon = sourceCoordinates.get("lon");
-
         double destinationLat = destinationCoordinates.get("lat");
         double destinationLon = destinationCoordinates.get("lon");
 
         // OSRM requires longitude,latitude coordinate order.
-        String coordinates =
-                sourceLon + "," + sourceLat
-                        + ";" + destinationLon + "," + destinationLat;
+        String coordinates = sourceLon + "," + sourceLat
+                + ";" + destinationLon + "," + destinationLat;
 
-        String url =
-                "https://router.project-osrm.org/route/v1/driving/"
-                        + coordinates
-                        + "?overview=full"
-                        + "&geometries=geojson"
-                        + "&steps=true"
-                        + "&alternatives=true";
+        String url = "https://router.project-osrm.org/route/v1/driving/"
+                + coordinates
+                + "?overview=full"
+                + "&geometries=geojson"
+                + "&steps=true"
+                + "&alternatives=true";
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(45))
-                .header(
-                        "User-Agent",
-                        "RouteWise-College-Project/1.0"
-                )
+                .header("User-Agent", "RouteWise-College-Project/1.0")
                 .header("Accept", "application/json")
                 .GET()
                 .build();
@@ -94,13 +80,11 @@ public class RoutingService {
 
         if (response.statusCode() != 200) {
             throw new RuntimeException(
-                    "Routing service returned status: "
-                            + response.statusCode()
+                    "Routing service returned status: " + response.statusCode()
             );
         }
 
         JsonNode root = objectMapper.readTree(response.body());
-
         String code = root.path("code").asText();
 
         if (!"Ok".equals(code)) {
@@ -116,99 +100,55 @@ public class RoutingService {
             throw new RuntimeException("No routes found");
         }
 
-        /*
-         * MAIN ROUTE
-         */
-
+        // Main route
         JsonNode mainRoute = routes.get(0);
 
         double distance = mainRoute.path("distance").asDouble();
         double duration = mainRoute.path("duration").asDouble();
 
-        double distanceKm =
-                Math.round((distance / 1000.0) * 100) / 100.0;
+        double distanceKm = Math.round((distance / 1000.0) * 100) / 100.0;
+        int durationMinutes = (int) Math.round(duration / 60.0);
 
-        int durationMinutes =
-                (int) Math.round(duration / 60.0);
-
-        List<Map<String, Object>> directions =
-                extractDirections(mainRoute);
-
-        List<List<Double>> geometry =
-                extractGeometry(mainRoute);
-
-        /*
-         * RESULT
-         */
+        List<Map<String, Object>> directions = extractDirections(mainRoute);
+        List<List<Double>> geometry = extractGeometry(mainRoute);
 
         Map<String, Object> result = new LinkedHashMap<>();
 
         result.put("source", source);
         result.put("destination", destination);
-
         result.put("sourceLatitude", sourceLat);
         result.put("sourceLongitude", sourceLon);
-
         result.put("destinationLatitude", destinationLat);
         result.put("destinationLongitude", destinationLon);
-
         result.put("distance", distanceKm);
         result.put("estimatedTime", durationMinutes);
-
         result.put("directions", directions);
         result.put("geometry", geometry);
 
-        /*
-         * ALTERNATIVE ROUTES
-         */
-
+        // Alternative routes
         if (routes.size() > 1) {
-
-            List<Map<String, Object>> alternatives =
-                    new ArrayList<>();
+            List<Map<String, Object>> alternatives = new ArrayList<>();
 
             for (int i = 1; i < routes.size(); i++) {
-
                 JsonNode alternative = routes.get(i);
 
                 double alternativeDistance =
                         alternative.path("distance").asDouble();
-
                 double alternativeDuration =
                         alternative.path("duration").asDouble();
 
                 double alternativeDistanceKm =
-                        Math.round(
-                                (alternativeDistance / 1000.0) * 100
-                        ) / 100.0;
+                        Math.round((alternativeDistance / 1000.0) * 100) / 100.0;
 
                 int alternativeTimeMinutes =
-                        (int) Math.round(
-                                alternativeDuration / 60.0
-                        );
+                        (int) Math.round(alternativeDuration / 60.0);
 
-                Map<String, Object> alternativeResult =
-                        new LinkedHashMap<>();
+                Map<String, Object> alternativeResult = new LinkedHashMap<>();
 
-                alternativeResult.put(
-                        "distance",
-                        alternativeDistanceKm
-                );
-
-                alternativeResult.put(
-                        "estimatedTime",
-                        alternativeTimeMinutes
-                );
-
-                alternativeResult.put(
-                        "directions",
-                        extractDirections(alternative)
-                );
-
-                alternativeResult.put(
-                        "geometry",
-                        extractGeometry(alternative)
-                );
+                alternativeResult.put("distance", alternativeDistanceKm);
+                alternativeResult.put("estimatedTime", alternativeTimeMinutes);
+                alternativeResult.put("directions", extractDirections(alternative));
+                alternativeResult.put("geometry", extractGeometry(alternative));
 
                 alternatives.add(alternativeResult);
             }
@@ -220,19 +160,21 @@ public class RoutingService {
     }
 
     /*
-     * =====================================================
-     * GEOCODING WITH DIAGNOSTIC LOGGING
-     * =====================================================
+     * GEOCODING WITH LOCATIONIQ
      */
-
-    private Map<String, Double> geocode(
-            String location) throws Exception {
+    private Map<String, Double> geocode(String location) throws Exception {
 
         if (location == null || location.isBlank()) {
-            System.out.println(
-                    "[RouteWise Geocode] Location is empty."
-            );
+            System.out.println("[RouteWise Geocode] Location is empty.");
             return null;
+        }
+
+        String apiKey = System.getenv("LOCATIONIQ_API_KEY");
+
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException(
+                    "LOCATIONIQ_API_KEY is missing. Configure it in the environment."
+            );
         }
 
         String cleanedLocation = location.trim();
@@ -251,29 +193,28 @@ public class RoutingService {
                     StandardCharsets.UTF_8
             );
 
-            String url =
-                    "https://nominatim.openstreetmap.org/search"
-                            + "?q=" + encodedLocation
-                            + "&format=jsonv2"
-                            + "&limit=3"
-                            + "&countrycodes=in"
-                            + "&accept-language=en";
-
-            System.out.println(
-                    "[RouteWise Geocode] Searching: "
-                            + searchLocation
+            String encodedApiKey = URLEncoder.encode(
+                    apiKey,
+                    StandardCharsets.UTF_8
             );
 
-            // Avoid sending rapid consecutive requests to Nominatim.
-            Thread.sleep(1100);
+            String url = "https://us1.locationiq.com/v1/search"
+                    + "?key=" + encodedApiKey
+                    + "&q=" + encodedLocation
+                    + "&format=json"
+                    + "&limit=3"
+                    + "&countrycodes=in"
+                    + "&accept-language=en";
+
+            System.out.println(
+                    "[RouteWise Geocode] Searching with LocationIQ: "
+                            + searchLocation
+            );
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .timeout(Duration.ofSeconds(15))
-                    .header(
-                            "User-Agent",
-                            "RouteWise-College-Project/1.0"
-                    )
+                    .header("User-Agent", "RouteWise-College-Project/1.0")
                     .header("Accept", "application/json")
                     .GET()
                     .build();
@@ -286,41 +227,44 @@ public class RoutingService {
                         HttpResponse.BodyHandlers.ofString()
                 );
             } catch (IOException e) {
-
                 System.out.println(
                         "[RouteWise Geocode] Request failed: "
                                 + e.getClass().getSimpleName()
-                                + " - " + e.getMessage()
                 );
-
                 continue;
             }
 
+            int status = response.statusCode();
             String body = response.body();
 
             System.out.println(
-                    "[RouteWise Geocode] HTTP status: "
-                            + response.statusCode()
-                            + ", response length: "
-                            + (body == null ? 0 : body.length())
+                    "[RouteWise Geocode] LocationIQ HTTP status: " + status
             );
 
-            if (response.statusCode() != 200) {
-
-                System.out.println(
-                        "[RouteWise Geocode] Provider returned "
-                                + "a non-200 status."
+            if (status == 401 || status == 403) {
+                throw new IllegalStateException(
+                        "LocationIQ rejected the API key or access. "
+                                + "Check LOCATIONIQ_API_KEY in Render."
                 );
+            }
 
+            if (status == 429) {
+                throw new RuntimeException(
+                        "LocationIQ rate limit reached. Please wait and retry."
+                );
+            }
+
+            if (status != 200) {
+                System.out.println(
+                        "[RouteWise Geocode] LocationIQ returned a non-200 status."
+                );
                 continue;
             }
 
             if (body == null || body.isBlank()) {
-
                 System.out.println(
-                        "[RouteWise Geocode] Empty response."
+                        "[RouteWise Geocode] LocationIQ returned an empty response."
                 );
-
                 continue;
             }
 
@@ -329,28 +273,20 @@ public class RoutingService {
             try {
                 results = objectMapper.readTree(body);
             } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-
                 System.out.println(
-                        "[RouteWise Geocode] Invalid JSON response: "
-                                + e.getOriginalMessage()
+                        "[RouteWise Geocode] Invalid JSON returned by LocationIQ."
                 );
-
                 continue;
             }
 
-            if (results == null
-                    || !results.isArray()
-                    || results.isEmpty()) {
-
+            if (results == null || !results.isArray() || results.isEmpty()) {
                 System.out.println(
                         "[RouteWise Geocode] No matching locations returned."
                 );
-
                 continue;
             }
 
             for (JsonNode item : results) {
-
                 JsonNode latitudeNode = item.get("lat");
                 JsonNode longitudeNode = item.get("lon");
 
@@ -359,38 +295,28 @@ public class RoutingService {
                 }
 
                 try {
-                    double lat = Double.parseDouble(
-                            latitudeNode.asText()
-                    );
-
-                    double lon = Double.parseDouble(
-                            longitudeNode.asText()
-                    );
+                    double lat = Double.parseDouble(latitudeNode.asText());
+                    double lon = Double.parseDouble(longitudeNode.asText());
 
                     if (!Double.isFinite(lat)
                             || !Double.isFinite(lon)
                             || lat < -90 || lat > 90
                             || lon < -180 || lon > 180) {
-
                         continue;
                     }
 
-                    Map<String, Double> coordinates =
-                            new LinkedHashMap<>();
-
+                    Map<String, Double> coordinates = new LinkedHashMap<>();
                     coordinates.put("lat", lat);
                     coordinates.put("lon", lon);
 
                     System.out.println(
                             "[RouteWise Geocode] SUCCESS for "
-                                    + location + ": "
-                                    + lat + ", " + lon
+                                    + location + ": " + lat + ", " + lon
                     );
 
                     return coordinates;
 
                 } catch (NumberFormatException e) {
-
                     System.out.println(
                             "[RouteWise Geocode] Invalid coordinates returned."
                     );
@@ -399,7 +325,7 @@ public class RoutingService {
         }
 
         System.out.println(
-                "[RouteWise Geocode] FAILED after all attempts for: "
+                "[RouteWise Geocode] FAILED after all LocationIQ attempts for: "
                         + location
         );
 
@@ -407,17 +333,11 @@ public class RoutingService {
     }
 
     /*
-     * =====================================================
      * TURN-BY-TURN DIRECTIONS
-     * =====================================================
      */
+    private List<Map<String, Object>> extractDirections(JsonNode route) {
 
-    private List<Map<String, Object>> extractDirections(
-            JsonNode route) {
-
-        List<Map<String, Object>> directions =
-                new ArrayList<>();
-
+        List<Map<String, Object>> directions = new ArrayList<>();
         JsonNode legs = route.path("legs");
 
         if (!legs.isArray()) {
@@ -427,7 +347,6 @@ public class RoutingService {
         int stepNumber = 1;
 
         for (JsonNode leg : legs) {
-
             JsonNode steps = leg.path("steps");
 
             if (!steps.isArray()) {
@@ -435,7 +354,6 @@ public class RoutingService {
             }
 
             for (JsonNode step : steps) {
-
                 JsonNode maneuver = step.path("maneuver");
 
                 String type = maneuver.path("type").asText(null);
@@ -449,32 +367,18 @@ public class RoutingService {
                     continue;
                 }
 
-                String instruction = createInstruction(
-                        type,
-                        modifier,
-                        road
-                );
+                String instruction = createInstruction(type, modifier, road);
 
                 if (instruction == null) {
                     continue;
                 }
 
-                Map<String, Object> direction =
-                        new LinkedHashMap<>();
-
+                Map<String, Object> direction = new LinkedHashMap<>();
                 direction.put("step", stepNumber);
                 direction.put("instruction", instruction);
                 direction.put("road", road);
-
-                direction.put(
-                        "distance",
-                        Math.round(distance * 100) / 100.0
-                );
-
-                direction.put(
-                        "duration",
-                        (int) Math.round(duration / 60.0)
-                );
+                direction.put("distance", Math.round(distance * 100) / 100.0);
+                direction.put("duration", (int) Math.round(duration / 60.0));
 
                 directions.add(direction);
                 stepNumber++;
@@ -485,17 +389,11 @@ public class RoutingService {
     }
 
     /*
-     * =====================================================
      * MAP GEOMETRY
-     * =====================================================
      */
+    private List<List<Double>> extractGeometry(JsonNode route) {
 
-    private List<List<Double>> extractGeometry(
-            JsonNode route) {
-
-        List<List<Double>> coordinates =
-                new ArrayList<>();
-
+        List<List<Double>> coordinates = new ArrayList<>();
         JsonNode geometry = route.path("geometry");
 
         if (!geometry.isObject()) {
@@ -509,7 +407,6 @@ public class RoutingService {
         }
 
         for (JsonNode point : coordinatesNode) {
-
             if (!point.isArray() || point.size() < 2) {
                 continue;
             }
@@ -527,11 +424,8 @@ public class RoutingService {
     }
 
     /*
-     * =====================================================
      * HUMAN-READABLE INSTRUCTIONS
-     * =====================================================
      */
-
     private String createInstruction(
             String type,
             String modifier,
@@ -550,7 +444,6 @@ public class RoutingService {
         }
 
         if (type.equals("turn")) {
-
             if ("left".equals(modifier)) {
                 return "Turn left" + roadText(road);
             }
@@ -594,13 +487,9 @@ public class RoutingService {
     }
 
     /*
-     * =====================================================
      * ROAD TEXT
-     * =====================================================
      */
-
     private String roadText(String road) {
-
         if (road == null || road.isBlank()) {
             return "";
         }
@@ -609,14 +498,9 @@ public class RoutingService {
     }
 
     /*
-     * =====================================================
      * STRING EXTRACTION - RETAINED FOR COMPATIBILITY
-     * =====================================================
      */
-
-    private String extractString(
-            String body,
-            String key) {
+    private String extractString(String body, String key) {
 
         int index = body.indexOf(key);
 
@@ -625,7 +509,6 @@ public class RoutingService {
         }
 
         int start = index + key.length();
-
         int end = body.indexOf("\"", start);
 
         if (end == -1) {
